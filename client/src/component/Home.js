@@ -17,7 +17,6 @@ import Election from "../contracts/Election.json";
 // CSS
 import "./Home.css";
 
-// const buttonRef = React.createRef();
 export default class Home extends Component {
   constructor(props) {
     super(props);
@@ -44,10 +43,10 @@ export default class Home extends Component {
 
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
-
       // Get the contract instance.
       const networkId = await web3.eth.net.getId();
       const deployedNetwork = Election.networks[networkId];
+
       const instance = new web3.eth.Contract(
         Election.abi,
         deployedNetwork && deployedNetwork.address
@@ -62,11 +61,11 @@ export default class Home extends Component {
       });
 
       const admin = await this.state.ElectionInstance.methods.getAdmin().call();
+
       if (this.state.account === admin) {
         this.setState({ isAdmin: true });
       }
 
-      // Get election start and end values
       const start = await this.state.ElectionInstance.methods.getStart().call();
       this.setState({ elStarted: start });
       const end = await this.state.ElectionInstance.methods.getEnd().call();
@@ -74,9 +73,9 @@ export default class Home extends Component {
 
       // Getting election details from the contract
       const electionDetails = await this.state.ElectionInstance.methods
-      .getElectionDetails()
-      .call();
-      
+        .getElectionDetails()
+        .call();
+
       this.setState({
         elDetails: {
           adminName: electionDetails.adminName,
@@ -126,6 +125,7 @@ export default class Home extends Component {
     }
     return (
       <>
+        
         {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
         <div className="container-main">
           <div className="container-item center-items info">
@@ -134,7 +134,7 @@ export default class Home extends Component {
           {!this.state.elStarted & !this.state.elEnded ? (
             <div className="container-item info">
               <center>
-                <h3>The election has not been initialize.</h3>
+                <h3>The election has not been initialized.</h3>
                 {this.state.isAdmin ? (
                   <p>Set up the election.</p>
                 ) : (
@@ -142,8 +142,10 @@ export default class Home extends Component {
                 )}
               </center>
             </div>
+      
           ) : null}
         </div>
+        
         {this.state.isAdmin ? (
           <>
             <this.renderAdminHome />
@@ -174,7 +176,7 @@ export default class Home extends Component {
 
   renderAdminHome = () => {
     const EMsg = (props) => {
-      return <span style={{ color: "tomato" }}>{props.msg}</span>;
+      return <span style={{ color: "red" }}>{props.msg}</span>;
     };
 
     const AdminHome = () => {
@@ -192,7 +194,7 @@ export default class Home extends Component {
       return (
         <div>
           <form onSubmit={handleSubmit(onSubmit)}>
-            {!this.state.elStarted & !this.state.elEnded ? (
+            {!this.state.elStarted && !this.state.elEnded ? (
               <div className="container-main">
                 {/* about-admin */}
                 <div className="about-admin">
@@ -243,7 +245,7 @@ export default class Home extends Component {
                         <input
                           className="input-home"
                           type="text"
-                          placeholder="eg. HR Head "
+                          placeholder="eg. CEO , HR , ... "
                           {...register("adminTitle", {
                             required: true,
                           })}

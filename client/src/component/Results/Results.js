@@ -128,6 +128,7 @@ export default class Result extends Component {
             </div>
           ) : !this.state.isElStarted && this.state.isElEnded ? (
             displayResults(this.state.candidates)
+            // displayCharts(this.state.candidates)
           ) : null}
         </div>
       </>
@@ -168,7 +169,10 @@ function displayWinner(candidates) {
   const winnerCandidate = getWinner(candidates);
   return <>{winnerCandidate.map(renderWinner)}</>;
 }
-
+export function displayCharts(candidates) {
+  return <>
+  </>
+}
 export function displayResults(candidates) {
   const renderResults = (candidate) => {
     return (

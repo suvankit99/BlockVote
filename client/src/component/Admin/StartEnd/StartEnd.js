@@ -107,7 +107,7 @@ export default class StartEnd extends Component {
         <NavbarAdmin />
         {!this.state.elStarted & !this.state.elEnded ? (
           <div className="container-item info">
-            <center>The election have never been initiated.</center>
+            <center>The election has not been initiated.</center>
           </div>
         ) : null}
         <div className="container-main">

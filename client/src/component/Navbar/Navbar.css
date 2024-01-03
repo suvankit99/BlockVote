@@ -11,7 +11,7 @@ a {
 nav {
   display: flex;
   height: 11vh;
-  background: tomato;
+  background: #393E46;
   justify-content: space-around;
   position: sticky;
   top: 0;
@@ -27,19 +27,21 @@ nav .header:hover {
 }
 nav .navbar-links {
   display: flex;
+  flex-direction: row;
   justify-content: space-around;
   width: 70%;
   cursor: pointer;
 }
 nav .navbar-links a {
-  font-size: 17px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 19px;
   font-weight: normal;
   cursor: pointer;
   text-transform: capitalize;
 }
 nav .navbar-links a:hover {
   cursor: pointer;
-  color: black;
+  color: #00ADB5;
 }
 nav .burger-menu {
   font-size: 24px;
@@ -48,7 +50,15 @@ nav .burger-menu {
   display: none;
 }
 .nav-active {
-  color: black;
+  color: #00ADB5;
+}
+
+.blockvote{
+  color:white ;
+  background-color: #393E46;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: x-large;
 }
 
 @media all and (max-width: 777px) {
@@ -56,7 +66,7 @@ nav .burger-menu {
     display: block;
   }
   nav .navbar-links {
-    background-color: tomato;
+    background-color: #CBF1F5;
     display: block;
     width: 50%;
     position: absolute;

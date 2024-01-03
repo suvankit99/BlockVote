@@ -29,10 +29,12 @@ contract Election {
     }
     // Modeling a candidate
     struct Candidate {
+        address candidateAddress;
         uint256 candidateId;
         string header;
         string slogan;
         uint256 voteCount;
+        bool isVerified ;
     }
     mapping(uint256 => Candidate) public candidateDetails;
 
@@ -40,17 +42,28 @@ contract Election {
     function addCandidate(string memory _header, string memory _slogan)
         public
         // Only admin can add
-        onlyAdmin
+        // onlyAdmin
     {
         Candidate memory newCandidate =
             Candidate({
+                candidateAddress:msg.sender ,
                 candidateId: candidateCount,
                 header: _header,
                 slogan: _slogan,
-                voteCount: 0
+                voteCount: 0,
+                isVerified : false 
             });
         candidateDetails[candidateCount] = newCandidate;
         candidateCount += 1;
+    }
+
+    // Verify candidate
+    function verifyCandidate(bool _verifiedStatus, uint256 candidateId)
+        public
+        // Only admin can verify
+        onlyAdmin
+    {
+        candidateDetails[candidateId].isVerified = _verifiedStatus ;
     }
 
     // Modeling a Election Details
@@ -118,42 +131,37 @@ contract Election {
         address voterAddress;
         string name;
         string phone;
+        string email;
         bool isVerified;
         bool hasVoted;
         bool isRegistered;
+        string otp ; 
     }
     address[] public voters; // Array of address to store address of voters
-    mapping(address => Voter) public voterDetails;
+    mapping(address => Voter) public voterDetails; 
 
     // Request to be added as voter
-    function registerAsVoter(string memory _name, string memory _phone) public {
+    function registerAsVoter(string memory _name, string memory _phone , string memory _email , string memory _otp) public {
         Voter memory newVoter =
             Voter({
                 voterAddress: msg.sender,
                 name: _name,
                 phone: _phone,
+                email:_email ,
                 hasVoted: false,
                 isVerified: false,
-                isRegistered: true
+                isRegistered: true,
+                otp: _otp
             });
         voterDetails[msg.sender] = newVoter;
         voters.push(msg.sender);
         voterCount += 1;
     }
 
-    // Verify voter
-    function verifyVoter(bool _verifedStatus, address voterAddress)
-        public
-        // Only admin can verify
-        onlyAdmin
-    {
-        voterDetails[voterAddress].isVerified = _verifedStatus;
-    }
-
-    // Vote
+    // Voting
     function vote(uint256 candidateId) public {
         require(voterDetails[msg.sender].hasVoted == false);
-        require(voterDetails[msg.sender].isVerified == true);
+        // require(voterDetails[msg.sender].isVerified == true);
         require(start == true);
         require(end == false);
         candidateDetails[candidateId].voteCount += 1;

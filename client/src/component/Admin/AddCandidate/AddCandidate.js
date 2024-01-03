@@ -16,12 +16,14 @@ export default class AddCandidate extends Component {
     this.state = {
       ElectionInstance: undefined,
       web3: null,
-      accounts: null,
+      account: null,
       isAdmin: false,
       header: "",
       slogan: "",
       candidates: [],
       candidateCount: undefined,
+      imageBuffer: "",
+      candidateRegistered:false 
     };
   }
 
@@ -74,10 +76,22 @@ export default class AddCandidate extends Component {
           id: candidate.candidateId,
           header: candidate.header,
           slogan: candidate.slogan,
+          address : candidate.candidateAddress
         });
       }
-
+      
       this.setState({ candidates: this.state.candidates });
+
+      let registered = false ; 
+      for(let i = 0 ; i < this.state.candidateCount ; i++){
+        if(this.state.candidates[i].address === this.state.account){
+          registered = true ;
+          break ; 
+        }
+      }
+      if(registered){
+        this.setState({candidateRegistered : true}) ;
+      }
     } catch (error) {
       // Catch any errors for any of the above operations.
       console.error(error);
@@ -93,12 +107,25 @@ export default class AddCandidate extends Component {
     this.setState({ slogan: event.target.value });
   };
 
+  captureFile = (event) => {
+    const file = event.target.files[0] ;
+    const reader = new window.FileReader();
+    reader.readAsArrayBuffer(file) ;
+    reader.onloadend = () => {
+      let buffer = Buffer(reader.result) ;
+      this.setState({imageBuffer:buffer}) ;
+      console.log("buffer:" , this.state.imageBuffer) 
+    }
+
+    
+  }
   addCandidate = async () => {
     await this.state.ElectionInstance.methods
       .addCandidate(this.state.header, this.state.slogan)
       .send({ from: this.state.account, gas: 1000000 });
     window.location.reload();
   };
+
 
   render() {
     if (!this.state.web3) {
@@ -109,53 +136,69 @@ export default class AddCandidate extends Component {
         </>
       );
     }
-    if (!this.state.isAdmin) {
-      return (
-        <>
-          <Navbar />
-          <AdminOnly page="Add Candidate Page." />
-        </>
-      );
-    }
+    // if (!this.state.isAdmin) {
+      // return (
+      //   <>
+      //     <Navbar />
+      //     <AdminOnly page="Add Candidate Page." />
+      //   </>
+      // );
+    // }
     return (
       <>
-        <NavbarAdmin />
+        {this.state.isAdmin ? <NavbarAdmin/> : <Navbar/>}
         <div className="container-main">
-          <h2>Add a new candidate</h2>
-          <small>Total candidates: {this.state.candidateCount}</small>
+          <h2>Candidate Registration</h2>
+          <small>Total candidates applied : {this.state.candidateCount}</small>
           <div className="container-item">
-            <form className="form">
+            <form className="form" onSubmit={this.handleSubmit}>
               <label className={"label-ac"}>
-                Header
+                Name
                 <input
                   className={"input-ac"}
                   type="text"
-                  placeholder="eg. Marcus"
+                  placeholder="eg. Modi ..."
                   value={this.state.header}
                   onChange={this.updateHeader}
+                  disabled={this.state.candidateRegistered}
                 />
               </label>
               <label className={"label-ac"}>
-                Slogan
+                Party
+                <input
+                  className={"input-ac"}
+                  type="text"
+                  placeholder="eg. BJP "
+                  value={this.state.slogan}
+                  onChange={this.updateSlogan}
+                  disabled={this.state.candidateRegistered}
+                />
+              </label>
+               <label className={"label-ac"}>
+               Account Address
                 <input
                   className={"input-ac"}
                   type="text"
                   placeholder="eg. It is what it is"
-                  value={this.state.slogan}
-                  onChange={this.updateSlogan}
+                  value={this.state.account}
+                  onChange={this.captureFile}
+                  disabled={this.state.candidateRegistered}
                 />
               </label>
               <button
                 className="btn-add"
                 disabled={
-                  this.state.header.length < 3 || this.state.header.length > 21
+                  this.state.header.length < 3 || this.state.header.length > 21 || this.state.candidateRegistered
                 }
-                onClick={this.addCandidate}
+                onClick={() => {
+                  this.addCandidate() ; 
+                }}
               >
-                Add
+                Register
               </button>
             </form>
           </div>
+          {this.state.candidateRegistered && <p>You have successfully registered as a candidate , wait for verification from admin side </p>}
         </div>
         {loadAdded(this.state.candidates)}
       </>
@@ -174,7 +217,7 @@ export function loadAdded(candidates) {
             }}
           >
             {candidate.id}. <strong>{candidate.header}</strong>:{" "}
-            {candidate.slogan}
+            {candidate.slogan} : <strong>{candidate.address}</strong>
           </div>
         </div>
       </>

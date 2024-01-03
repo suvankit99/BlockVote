@@ -6,31 +6,48 @@ import "./Navbar.css";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   return (
+    <>
+    <div className="blockvote"><h1>BlockVote</h1></div>
     <nav>
-      <NavLink to="/" className="header">
-        <i className="fab fa-hive"></i> Home
-      </NavLink>
+      
+      <div className="header">
+        <NavLink to="/">
+          {/* <i className="fab fa-hive" /> */}
+           Home
+        </NavLink>
+      </div>
       <ul
         className="navbar-links"
-        style={{ width: "35%", transform: open ? "translateX(0px)" : "" }}
+        style={{ transform: open ? "translateX(0px)" : "" }}
       >
+        {/* <li>
+          <NavLink to="/Verification" activeClassName="nav-active">
+            Verification
+          </NavLink>
+        </li> */}
+        <li>
+          <NavLink to="/AddCandidate" activeClassName="nav-active">
+            Candidate Registration
+          </NavLink>
+        </li>
         <li>
           <NavLink to="/Registration" activeClassName="nav-active">
-            <i className="far fa-registered" /> Registration
+             Voter Registration
           </NavLink>
         </li>
         <li>
           <NavLink to="/Voting" activeClassName="nav-active">
-            <i className="fas fa-vote-yea" /> Voting
+            Voting
           </NavLink>
         </li>
         <li>
           <NavLink to="/Results" activeClassName="nav-active">
-            <i className="fas fa-poll-h" /> Results
+             Results
           </NavLink>
         </li>
       </ul>
       <i onClick={() => setOpen(!open)} className="fas fa-bars burger-menu"></i>
     </nav>
+    </>
   );
 }

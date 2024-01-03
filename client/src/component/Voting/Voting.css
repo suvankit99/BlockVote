@@ -8,6 +8,7 @@ small {
   color: grey;
   font-size: medium;
 }
+
 p {
   margin: 1px;
   padding: 3px;
@@ -51,6 +52,13 @@ p {
   width: 100%;
   height: 55px;
   font-size: 157%;
+}
+.input-r {
+  margin: 0.5em;
+  margin-left: 0;
+  padding: 1em;
+  display: block;
+  overflow: scroll;
 }
 @media all and (max-width: 900px) {
   .candidate-info,

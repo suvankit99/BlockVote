@@ -12,6 +12,7 @@
   padding: 1em;
   display: block;
   width: 333px;
+  border-radius: 15px;
 }
 .label-ac {
   display: block;
@@ -23,6 +24,7 @@
   padding: 1em;
   float: inline-end;
   margin: 1em;
+  color:black ;
 }
 
 @media all and (max-width: 400px) {

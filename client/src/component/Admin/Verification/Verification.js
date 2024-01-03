@@ -18,14 +18,15 @@ export default class Registration extends Component {
       account: null,
       web3: null,
       isAdmin: false,
-      voterCount: undefined,
-      voters: [],
+      candidateCount: undefined,
+      candidates: [],
     };
   }
 
   // refreshing once
   componentDidMount = async () => {
     if (!window.location.hash) {
+      console.log(window.location.hash);
       window.location = window.location + "#loaded";
       window.location.reload();
     }
@@ -52,36 +53,29 @@ export default class Registration extends Component {
       const candidateCount = await this.state.ElectionInstance.methods
         .getTotalCandidate()
         .call();
+
       this.setState({ candidateCount: candidateCount });
+      // Total candidates
+
+      for (let i = 0; i < this.state.candidateCount; i++) {
+        const candidate = await this.state.ElectionInstance.methods
+          .candidateDetails(i)
+          .call();
+        this.state.candidates.push({
+          candidateAddress: candidate.candidateAddress,
+          candidateId: candidate.candidateId,
+          header: candidate.header,
+          slogan: candidate.slogan,
+          voteCount: candidate.voteCount,
+          isVerified: candidate.isVerified,
+        });
+      }
 
       // Admin account and verification
       const admin = await this.state.ElectionInstance.methods.getAdmin().call();
       if (this.state.account === admin) {
         this.setState({ isAdmin: true });
       }
-      // Total number of voters
-      const voterCount = await this.state.ElectionInstance.methods
-        .getTotalVoter()
-        .call();
-      this.setState({ voterCount: voterCount });
-      // Loading all the voters
-      for (let i = 0; i < this.state.voterCount; i++) {
-        const voterAddress = await this.state.ElectionInstance.methods
-          .voters(i)
-          .call();
-        const voter = await this.state.ElectionInstance.methods
-          .voterDetails(voterAddress)
-          .call();
-        this.state.voters.push({
-          address: voter.voterAddress,
-          name: voter.name,
-          phone: voter.phone,
-          hasVoted: voter.hasVoted,
-          isVerified: voter.isVerified,
-          isRegistered: voter.isRegistered,
-        });
-      }
-      this.setState({ voters: this.state.voters });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -90,72 +84,67 @@ export default class Registration extends Component {
       console.error(error);
     }
   };
-  renderUnverifiedVoters = (voter) => {
-    const verifyVoter = async (verifiedStatus, address) => {
-      await this.state.ElectionInstance.methods
-        .verifyVoter(verifiedStatus, address)
-        .send({ from: this.state.account, gas: 1000000 });
-      window.location.reload();
-    };
+  verifyCandidate = async (verifiedStatus, candidateId) => {
+    await this.state.ElectionInstance.methods
+      .verifyCandidate(verifiedStatus, candidateId)
+      .send({ from: this.state.account, gas: 1000000 });
+    window.location.reload();
+  };
+
+  renderUnverifiedCandidates = (candidate) => {
     return (
       <>
-        {voter.isVerified ? (
-          <div className="container-list success">
-            <p style={{ margin: "7px 0px" }}>AC: {voter.address}</p>
+        {candidate.isVerified ? (
+          <div key={candidate.candidateId} className="container-list success">
+            <p style={{ margin: "7px 0px" }}>
+              AC: {candidate.candidateAddress}
+            </p>
             <table>
               <tr>
                 <th>Name</th>
-                <th>Phone</th>
-                <th>Voted</th>
+                <th>Party</th>
+                <th>Verified</th>
               </tr>
               <tr>
-                <td>{voter.name}</td>
-                <td>{voter.phone}</td>
-                <td>{voter.hasVoted ? "True" : "False"}</td>
+                <td>{candidate.header}</td>
+                <td>{candidate.slogan}</td>
+                <td>{candidate.isVerified ? "True" : "False"}</td>
               </tr>
             </table>
           </div>
-        ) : null}
-        <div
-          className="container-list attention"
-          style={{ display: voter.isVerified ? "none" : null }}
-        >
-          <table>
-            <tr>
-              <th>Account address</th>
-              <td>{voter.address}</td>
-            </tr>
-            <tr>
-              <th>Name</th>
-              <td>{voter.name}</td>
-            </tr>
-            <tr>
-              <th>Phone</th>
-              <td>{voter.phone}</td>
-            </tr>
-            <tr>
-              <th>Voted</th>
-              <td>{voter.hasVoted ? "True" : "False"}</td>
-            </tr>
-            <tr>
-              <th>Verified</th>
-              <td>{voter.isVerified ? "True" : "False"}</td>
-            </tr>
-            <tr>
-              <th>Registered</th>
-              <td>{voter.isRegistered ? "True" : "False"}</td>
-            </tr>
-          </table>
-          <div style={{}}>
-            <button
-              className="btn-verification approve"
-              disabled={voter.isVerified}
-              onClick={() => verifyVoter(true, voter.address)}
-            >
-              Approve
-            </button>
+        ) : (
+          <div
+            key={candidate.candidateId}
+            className="container-list attention"
+            style={{ display: candidate.isVerified ? "none" : null }}
+          >
+            <table>
+              <tr>
+                <th>Account address</th>
+                <td>{candidate.candidateAddress}</td>
+              </tr>
+              <tr>
+                <th>Name</th>
+                <td>{candidate.header}</td>
+              </tr>
+              <tr>
+                <th>Verified</th>
+                <td>{candidate.isVerified ? "True" : "False"}</td>
+              </tr>
+            </table>
+            <div style={{}}>
+              <button
+                className="btn-verification approve"
+                disabled={candidate.isVerified}
+                onClick={() =>
+                  this.verifyCandidate(true, candidate.candidateId)
+                }
+              >
+                Approve
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </>
     );
   };
@@ -181,15 +170,18 @@ export default class Registration extends Component {
         <NavbarAdmin />
         <div className="container-main">
           <h3>Verification</h3>
-          <small>Total Voters: {this.state.voters.length}</small>
-          {this.state.voters.length < 1 ? (
+          <small>
+            Total candidates applied : {this.state.candidates.length}
+          </small>
+          {this.state.candidates.length < 1 ? (
             <div className="container-item info">None has registered yet.</div>
           ) : (
             <>
               <div className="container-item info">
-                <center>List of registered voters</center>
+                <center>List of registered candidates</center>
               </div>
-              {this.state.voters.map(this.renderUnverifiedVoters)}
+              {this.state.candidates.map(this.renderUnverifiedCandidates)}
+              {console.log("Inside = ", this.state.candidates.length)}
             </>
           )}
         </div>

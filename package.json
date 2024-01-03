@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@fleekhq/fleek-storage-js": "^1.0.24",
+    "@truffle/hdwallet-provider": "^2.1.15",
+    "chart.js": "^4.4.0",
+    "helia": "^2.1.0",
+    "ipfs-http-client": "^60.0.1"
+  }
+}

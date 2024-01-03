@@ -23,6 +23,7 @@ export default class Voting extends Component {
       web3: null,
       isAdmin: false,
       candidateCount: undefined,
+      verifiedCandidatesCount:0,
       candidates: [],
       isElStarted: false,
       isElEnded: false,
@@ -33,7 +34,10 @@ export default class Voting extends Component {
         hasVoted: false,
         isVerified: false,
         isRegistered: false,
+        otp: "",
       },
+      emailVerified: false,
+      otpEntered: "",
     };
   }
   componentDidMount = async () => {
@@ -78,17 +82,24 @@ export default class Voting extends Component {
       this.setState({ isElEnded: end });
 
       // Loading Candidates details
+      let verifiedCandidatesCount = 0 ;
+
       for (let i = 1; i <= this.state.candidateCount; i++) {
         const candidate = await this.state.ElectionInstance.methods
           .candidateDetails(i - 1)
           .call();
+        
         this.state.candidates.push({
           id: candidate.candidateId,
           header: candidate.header,
           slogan: candidate.slogan,
+          address: candidate.candidateAddress,
+          isVerified: candidate.isVerified
         });
+        if(candidate.isVerified) verifiedCandidatesCount++ ; 
       }
-      this.setState({ candidates: this.state.candidates });
+      this.setState({verifiedCandidatesCount : verifiedCandidatesCount})
+      // this.setState({ candidates: this.state.candidates });
 
       // Loading current voter
       const voter = await this.state.ElectionInstance.methods
@@ -102,6 +113,7 @@ export default class Voting extends Component {
           hasVoted: voter.hasVoted,
           isVerified: voter.isVerified,
           isRegistered: voter.isRegistered,
+          otp: voter.otp,
         },
       });
 
@@ -118,7 +130,14 @@ export default class Voting extends Component {
       console.error(error);
     }
   };
-
+  checkOTP = async () => {
+    if (this.state.currentVoter.otp === this.state.otpEntered) {
+      this.setState({ emailVerified: true });
+      alert("OTP accepted ! Go ahead and cast your vote");
+    } else {
+      alert("Invalid OTP !!");
+    }
+  };
   renderCandidates = (candidate) => {
     const castVote = async (id) => {
       await this.state.ElectionInstance.methods
@@ -134,13 +153,20 @@ export default class Voting extends Component {
         castVote(id);
       }
     };
-    return (
+    return candidate.isVerified ? (
       <div className="container-item">
         <div className="candidate-info">
-          <h2>
-            {candidate.header} <small>#{candidate.id}</small>
-          </h2>
-          <p className="slogan">{candidate.slogan}</p>
+          <table>
+            <tr>
+              <th>Name : </th><th><p>{candidate.header}</p></th>
+            </tr>
+            <tr>
+              <th>Party : </th><th><p>{candidate.slogan}</p></th>
+            </tr>
+            <tr>
+              <th>Account : </th><th><p>{candidate.address}</p></th>
+            </tr>
+          </table>
         </div>
         <div className="vote-btn-container">
           <button
@@ -148,15 +174,15 @@ export default class Voting extends Component {
             className="vote-bth"
             disabled={
               !this.state.currentVoter.isRegistered ||
-              !this.state.currentVoter.isVerified ||
-              this.state.currentVoter.hasVoted
+              this.state.currentVoter.hasVoted ||
+              !this.state.emailVerified
             }
           >
             Vote
           </button>
         </div>
       </div>
-    );
+    ) : null;
   };
 
   render() {
@@ -178,33 +204,28 @@ export default class Voting extends Component {
           ) : this.state.isElStarted && !this.state.isElEnded ? (
             <>
               {this.state.currentVoter.isRegistered ? (
-                this.state.currentVoter.isVerified ? (
-                  this.state.currentVoter.hasVoted ? (
-                    <div className="container-item success">
-                      <div>
-                        <strong>You've casted your vote.</strong>
-                        <p />
-                        <center>
-                          <Link
-                            to="/Results"
-                            style={{
-                              color: "black",
-                              textDecoration: "underline",
-                            }}
-                          >
-                            See Results
-                          </Link>
-                        </center>
-                      </div>
+                // this.state.currentVoter.isVerified ? (
+                this.state.currentVoter.hasVoted ? (
+                  <div className="container-item success">
+                    <div>
+                      <strong>You've casted your vote.</strong>
+                      <p />
+                      <center>
+                        <Link
+                          to="/Results"
+                          style={{
+                            color: "black",
+                            textDecoration: "underline",
+                          }}
+                        >
+                          See Results
+                        </Link>
+                      </center>
                     </div>
-                  ) : (
-                    <div className="container-item info">
-                      <center>Go ahead and cast your vote.</center>
-                    </div>
-                  )
+                  </div>
                 ) : (
-                  <div className="container-item attention">
-                    <center>Please wait for admin to verify.</center>
+                  <div className="container-item info">
+                    <center>Go ahead and cast your vote.</center>
                   </div>
                 )
               ) : (
@@ -224,11 +245,43 @@ export default class Voting extends Component {
                 </>
               )}
               <div className="container-main">
+                {this.state.currentVoter.isRegistered && (
+                  <div className="container-main-special">
+                    <h2>OTP Verification </h2>
+                    <form onSubmit={this.checkOTP}>
+                      <label>Enter the OTP sent over email</label>
+                      <input
+                        className={"input-r"}
+                        type="password"
+                        style={{ width: "400px", marginTop: "20px" }}
+                        disabled={this.state.currentVoter.hasVoted}
+                        onChange={(e) => {
+                          this.setState({ otpEntered: e.target.value });
+                        }}
+                        required
+                      ></input>
+                      <button
+                        type="submit"
+                        style={{
+                          width: "100px",
+                          padding: "10px",
+                          marginTop: "22px",
+                        }}
+                        disabled={this.state.emailVerified}
+                      >
+                        Submit
+                      </button>
+                    </form>
+                  </div>
+                )}
+
                 <h2>Candidates</h2>
-                <small>Total candidates: {this.state.candidates.length}</small>
+                <small>Total candidates: {this.state.verifiedCandidatesCount}</small>
                 {this.state.candidates.length < 1 ? (
                   <div className="container-item attention">
-                    <center>Not one to vote for.</center>
+                    <center>
+                      No one to vote for, insufficient number of candidates .
+                    </center>
                   </div>
                 ) : (
                   <>

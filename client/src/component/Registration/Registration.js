@@ -12,10 +12,18 @@ import "./Registration.css";
 // Contract
 import getWeb3 from "../../getWeb3";
 import Election from "../../contracts/Election.json";
+import { useRef } from "react";
+import 'dotenv'
+import emailjs from "@emailjs/browser";
+import axios from "axios";
+import { Link } from "react-router-dom";
+
+// const JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI5ODI1NjY2Zi1kYTlmLTQxZjMtYjUyNS01YjU2YTcxMDVjZTciLCJlbWFpbCI6InN1dmFua2l0MjAwMUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJpZCI6IkZSQTEiLCJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MX0seyJpZCI6Ik5ZQzEiLCJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MX1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiOGY2ZjJiNjRkNmQ0YjNkOTgyNTkiLCJzY29wZWRLZXlTZWNyZXQiOiIwYWVlODU4ZjY5N2U4NDQwN2ViYjI4YTRkZDhiZGNhZTAyMjdhYmNhOGM4MTdlN2YxZDA3ZTk5NmFjZjlkMzdiIiwiaWF0IjoxNzAzNTk0MTAzfQ.IlRWZYIpZMst3DEKw5nHgSpmSniS_9gyfijGD92wwyw' ;
 
 export default class Registration extends Component {
   constructor(props) {
     super(props);
+    this.formRef = React.createRef();
     this.state = {
       ElectionInstance: undefined,
       web3: null,
@@ -26,6 +34,8 @@ export default class Registration extends Component {
       voterCount: undefined,
       voterName: "",
       voterPhone: "",
+      voterEmail: "",
+      voterOTP: "",
       voters: [],
       currentVoter: {
         address: undefined,
@@ -35,7 +45,12 @@ export default class Registration extends Component {
         isVerified: false,
         isRegistered: false,
       },
+      buffer: [],
+      ipfsHash:'',
+      file:null 
     };
+    this.captureFile = this.captureFile.bind(this);
+    this.uploadFile = this.uploadFile.bind(this);
   }
 
   // refreshing once
@@ -126,18 +141,99 @@ export default class Registration extends Component {
       );
     }
   };
+  captureFile = async (e) => {
+    e.preventDefault() ;
+    const data = e.target.files[0]; //files array of files object
+    console.log(data);
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(data);
+
+    reader.onloadend = () => {
+      console.log(reader.result);
+      this.setState({file : reader.result})
+      console.log(this.state.file)
+    };
+  };
+  uploadFile = async (e) => {
+    e.preventDefault();
+    const apiKey = '8f6f2b64d6d4b3d98259' ;
+    const apiSecret = '0aee858f697e84407ebb28a4dd8bdcae0227abca8c817e7f1d07e996acf9d37b' ;
+    // return ; 
+    console.log(this.state.file);
+    if (this.state.file) {
+      try {
+        const formData = new FormData();
+        formData.append("file", this.state.file);
+
+        const resFile = await axios({
+          method: "post",
+          url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
+          data: formData,
+          headers: {
+            'pinata_api_key': apiKey,
+            'pinata_secret_api_key': apiSecret ,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        const ImgHash = `https://gateway.pinata.cloud/ipfs/${resFile.data.IpfsHash}`;
+        // contract.add(account,ImgHash);
+        console.log("Successfully Image Uploaded");
+      } catch (e) {
+        console.log("Unable to upload image to Pinata");
+      }
+    }
+  };
   updateVoterName = (event) => {
     this.setState({ voterName: event.target.value });
   };
   updateVoterPhone = (event) => {
     this.setState({ voterPhone: event.target.value });
   };
+
+  getOTP = () => {
+    let s = this.state.account;
+    let otp = "";
+    for (let i = 3; i < s.length; i += 7) {
+      otp = otp + s[i];
+    }
+    return otp;
+  };
+
+  sendEmail = (e) => {
+    e.preventDefault();
+
+    let params = {
+      to_name: this.state.account,
+      from_name: "BlockVote team",
+      to_email: this.state.voterEmail,
+      message: "Your otp is ",
+      otp: this.getOTP(),
+    };
+    emailjs
+      .send("service_buqxw6o", "template_ycxvpio", params, "VDS1LqakODWmnIw9v")
+      .then(
+        (result) => {
+          console.log(result.text);
+          alert("An OTP has been sent to your email , use it for voting !!");
+        },
+        (error) => {
+          console.log(error.text);
+        }
+      );
+  };
+
   registerAsVoter = async () => {
     await this.state.ElectionInstance.methods
-      .registerAsVoter(this.state.voterName, this.state.voterPhone)
+      .registerAsVoter(
+        this.state.voterName,
+        this.state.voterPhone,
+        this.state.voterEmail,
+        this.getOTP()
+      )
       .send({ from: this.state.account, gas: 1000000 });
     window.location.reload();
   };
+
   render() {
     if (!this.state.web3) {
       return (
@@ -150,8 +246,25 @@ export default class Registration extends Component {
     return (
       <>
         {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
+        
         {!this.state.isElStarted && !this.state.isElEnded ? (
           <NotInit />
+        ) :
+        !this.state.isElStarted && this.state.isElEnded ? (
+          <>
+            <div className="container-item attention">
+              <center>
+                <h3>The Election ended.</h3>
+                <br />
+                <Link
+                  to="/Results"
+                  style={{ color: "black", textDecoration: "underline" }}
+                >
+                  See results
+                </Link>
+              </center>
+            </div>
+          </>
         ) : (
           <>
             <div className="container-item info">
@@ -161,7 +274,10 @@ export default class Registration extends Component {
               <h3>Registration</h3>
               <small>Register to vote.</small>
               <div className="container-item">
-                <form>
+                <form
+                  ref={this.formRef}
+                  onSubmit={this.sendEmail}
+                >
                   <div className="div-li">
                     <label className={"label-r"}>
                       Account Address
@@ -170,6 +286,8 @@ export default class Registration extends Component {
                         type="text"
                         value={this.state.account}
                         style={{ width: "400px" }}
+                        disabled={this.state.currentVoter.isRegistered}
+                        required
                       />{" "}
                     </label>
                   </div>
@@ -182,6 +300,8 @@ export default class Registration extends Component {
                         placeholder="eg. Ava"
                         value={this.state.voterName}
                         onChange={this.updateVoterName}
+                        disabled={this.state.currentVoter.isRegistered}
+                        required
                       />{" "}
                     </label>
                   </div>
@@ -194,28 +314,81 @@ export default class Registration extends Component {
                         placeholder="eg. 9841234567"
                         value={this.state.voterPhone}
                         onChange={this.updateVoterPhone}
+                        disabled={this.state.currentVoter.isRegistered}
+                        required
                       />
                     </label>
                   </div>
-                  <p className="note">
-                    <span style={{ color: "tomato" }}> Note: </span>
-                    <br /> Make sure your account address and Phone number are
-                    correct. <br /> Admin might not approve your account if the
-                    provided Phone number nub does not matches the account
-                    address registered in admins catalogue.
-                  </p>
-                  <button
-                    className="btn-add"
-                    disabled={
-                      this.state.voterPhone.length !== 10 ||
-                      this.state.currentVoter.isVerified
-                    }
-                    onClick={this.registerAsVoter}
-                  >
-                    {this.state.currentVoter.isRegistered
-                      ? "Update"
-                      : "Register"}
-                  </button>
+                  <div className="div-li">
+                    <label className={"label-r"}>
+                      Email <span style={{ color: "tomato" }}>*</span>
+                      <input
+                        className={"input-r"}
+                        type="email"
+                        placeholder="eg. xxx@gmail.com"
+                        value={this.state.voterEmail}
+                        onChange={(event) => {
+                          this.setState({ voterEmail: event.target.value });
+                        }}
+                        disabled={this.state.currentVoter.isRegistered}
+                        required
+                      />
+                    </label>
+                  </div>
+
+
+                  {/* <div className="div-li">
+                    <label className={"label-r"}>
+                      Profile picture
+                      <input
+                        className={"input-r"}
+                        type="file"
+                        value={this.state.voterName}
+                        onChange={this.captureFile}
+                        disabled={this.state.currentVoter.isRegistered}
+                        required
+                      />{" "}
+                    </label>
+                  </div> */}
+
+
+                  {this.state.currentVoter.isRegistered ? null : (
+                    <div className="div-li"></div>
+                  )}
+
+                  {this.state.currentVoter.isRegistered ? (
+                    <p className="note">
+                      You have successfully registered , please wait for voting
+                      phase to begin
+                    </p>
+                  ) : (
+                    <>
+                      <p className="note">
+                        <span style={{ color: "tomato" }}> Note: </span>
+                        <br /> Make sure the details you fill in are correct{" "}
+                        <br />
+                      </p>
+                      <button
+                        className="btn-add"
+                        type="submit"
+                        disabled={
+                          this.state.currentVoter.isVerified ||
+                          this.state.currentVoter.isRegistered
+                        }
+                        onClick={(event) => {
+                          this.registerAsVoter();
+                          this.setState({ voterOTP: this.getOTP() });
+                          this.updateHash();
+                          // this.uploadFile(event);
+                          // console.log(this.state.voterOTP);
+                        }}
+                      >
+                        {this.state.currentVoter.isRegistered
+                          ? "You have already registered"
+                          : "Register"}
+                      </button>
+                    </>
+                  )}
                 </form>
               </div>
             </div>
@@ -237,7 +410,7 @@ export default class Registration extends Component {
                 className="container-main"
                 style={{ borderTop: "1px solid" }}
               >
-                <small>TotalVoters: {this.state.voters.length}</small>
+                <small>Total Voters: {this.state.voters.length}</small>
                 {loadAllVoters(this.state.voters)}
               </div>
             ) : null}

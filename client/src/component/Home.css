@@ -7,9 +7,19 @@
   margin-right: 7px;
   padding: 1em;
   min-width: 300px;
+  border-radius: 15px;
 }
 .input-home,
 .label-home {
   display: block;
   margin-bottom: 11px;
+}
+
+.about-admin{
+  background-color: #fff;
+}
+
+button{
+  background-color: #00ADB5;
+  border-radius: 20px;
 }

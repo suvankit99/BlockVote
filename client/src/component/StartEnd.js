@@ -8,8 +8,10 @@ const StartEnd = (props) => {
     margin: "7px",
     minWidth: "max-content",
     textAlign: "center",
-    width: "333px",
+    width: "100px",
     alignSelf: "center",
+    color: "#fff",
+    fontWeight:200
   };
   return (
     <div
@@ -21,11 +23,11 @@ const StartEnd = (props) => {
           {/* edit here to display start election Again button */}
           {!props.elEnded ? (
             <>
-              <div
+              {/* <div
                 className="container-item attention"
                 style={{ display: "block" }}
-              >
-                <h2>Do not forget to add candidates.</h2>
+              > */}
+                {/* <h2>Do not forget to add candidates.</h2>
                 <p>
                   Go to{" "}
                   <Link
@@ -39,11 +41,11 @@ const StartEnd = (props) => {
                     add candidates
                   </Link>{" "}
                   page.
-                </p>
-              </div>
+                </p> */}
+              {/* </div> */}
               <div className="container-item">
                 <button type="submit" style={btn}>
-                  Start Election {props.elEnded ? "Again" : null}
+                  <strong style={{color:"black"}}> Start Election </strong>{props.elEnded ? "Again" : null}
                 </button>
               </div>
             </>
