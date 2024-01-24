@@ -93,6 +93,13 @@ export default class Home extends Component {
       console.error(error);
     }
   };
+  // start Voting
+  startVoting = async () => {
+    await this.state.ElectionInstance.methods
+      .startVoting()
+      .send({ from: this.state.account, gas: 1000000 });
+    window.location.reload();
+  }
   // end election
   endElection = async () => {
     await this.state.ElectionInstance.methods
@@ -154,7 +161,7 @@ export default class Home extends Component {
           <>
             <UserHome el={this.state.elDetails} />
           </>
-        ) : !this.state.isElStarted && this.state.isElEnded ? (
+        ) : this.state.isElStarted && this.state.isElEnded ? (
           <>
             <div className="container-item attention">
               <center>
@@ -294,6 +301,8 @@ export default class Home extends Component {
               elStarted={this.state.elStarted}
               elEnded={this.state.elEnded}
               endElFn={this.endElection}
+              startVoting = {this.startVoting}
+              candidateRegistration
             />
             <ElectionStatus
               elStarted={this.state.elStarted}

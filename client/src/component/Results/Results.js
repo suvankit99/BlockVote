@@ -103,33 +103,39 @@ export default class Result extends Component {
         </>
       );
     }
+    if (!this.state.isElStarted && !this.state.isElEnded) {
+      return (
+        <>
+          {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
+          <NotInit />
+        </>
+      );
+    }
 
+    if (this.state.isElStarted && this.state.isElEnded) {
+      return (
+        <>
+          {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
+          {displayResults(this.state.candidates)};
+        </>
+      );
+    }
     return (
       <>
         {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
-        <br />
-        <div>
-          {!this.state.isElStarted && !this.state.isElEnded ? (
-            <NotInit />
-          ) : this.state.isElStarted && !this.state.isElEnded ? (
-            <div className="container-item attention">
-              <center>
-                <h3>The election is being conducted at the movement.</h3>
-                <p>Result will be displayed once the election has ended.</p>
-                <p>Go ahead and cast your vote {"(if not already)"}.</p>
-                <br />
-                <Link
-                  to="/Voting"
-                  style={{ color: "black", textDecoration: "underline" }}
-                >
-                  Voting Page
-                </Link>
-              </center>
-            </div>
-          ) : !this.state.isElStarted && this.state.isElEnded ? (
-            displayResults(this.state.candidates)
-            // displayCharts(this.state.candidates)
-          ) : null}
+        <div className="container-item attention">
+          <center>
+            <h3>The election is being conducted at the movement.</h3>
+            <p>Result will be displayed once the election has ended.</p>
+            <p>Go ahead and cast your vote {"(if not already)"}.</p>
+            <br />
+            <Link
+              to="/Voting"
+              style={{ color: "black", textDecoration: "underline" }}
+            >
+              Voting Page
+            </Link>
+          </center>
         </div>
       </>
     );
@@ -170,8 +176,7 @@ function displayWinner(candidates) {
   return <>{winnerCandidate.map(renderWinner)}</>;
 }
 export function displayCharts(candidates) {
-  return <>
-  </>
+  return <></>;
 }
 export function displayResults(candidates) {
   const renderResults = (candidate) => {

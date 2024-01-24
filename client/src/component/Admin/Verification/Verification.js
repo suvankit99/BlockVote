@@ -9,6 +9,7 @@ import getWeb3 from "../../../getWeb3";
 import Election from "../../../contracts/Election.json";
 
 import "./Verification.css";
+import NotInit from "../../NotInit";
 
 export default class Registration extends Component {
   constructor(props) {
@@ -157,6 +158,7 @@ export default class Registration extends Component {
         </>
       );
     }
+
     if (!this.state.isAdmin) {
       return (
         <>
@@ -165,6 +167,8 @@ export default class Registration extends Component {
         </>
       );
     }
+
+    
     return (
       <>
         <NavbarAdmin />

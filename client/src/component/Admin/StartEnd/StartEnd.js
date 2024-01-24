@@ -141,10 +141,6 @@ export default class StartEnd extends Component {
               </div>
             </>
           )}
-          <div className="election-status">
-            <p>Started: {this.state.elStarted ? "True" : "False"}</p>
-            <p>Ended: {this.state.elEnded ? "True" : "False"}</p>
-          </div>
         </div>
       </>
     );

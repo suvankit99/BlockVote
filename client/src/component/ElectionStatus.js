@@ -22,11 +22,11 @@ const ElectionStatus = (props) => {
     >
       <h3>Election Status</h3>
       <div style={electionStatus}>
-        {/* <p>Started: {props.elStarted ? "True" : "False"}</p>
-        <p>Ended: {props.elEnded ? "True" : "False"}</p> */}
+
         {(!props.elStarted && !props.elEnded) && <p>Election not yet initialized</p>}
-        {(props.elStarted && !props.elEnded) && <p>Election has started</p>}
-        {(!props.elStarted && props.elEnded) && <p>Election has ended</p>}
+        {(props.elStarted && !props.elEnded) && <p>Candidate Registration phase started </p>}
+        {(!props.elStarted && props.elEnded) && <p>Voting Phase started </p>}
+        {(props.elStarted && props.elEnded) && <p>Election ended </p>}
       </div>
       <div className="container-item" />
     </div>

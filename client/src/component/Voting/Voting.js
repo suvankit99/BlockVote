@@ -35,6 +35,7 @@ export default class Voting extends Component {
         isVerified: false,
         isRegistered: false,
         otp: "",
+        ipfsHash:""
       },
       emailVerified: false,
       otpEntered: "",
@@ -80,7 +81,8 @@ export default class Voting extends Component {
       this.setState({ isElStarted: start });
       const end = await this.state.ElectionInstance.methods.getEnd().call();
       this.setState({ isElEnded: end });
-
+      console.log("start = " , this.state.isElStarted) ; 
+      console.log("end = " , this.state.isElEnded) ; 
       // Loading Candidates details
       let verifiedCandidatesCount = 0 ;
 
@@ -94,12 +96,12 @@ export default class Voting extends Component {
           header: candidate.header,
           slogan: candidate.slogan,
           address: candidate.candidateAddress,
-          isVerified: candidate.isVerified
+          isVerified: candidate.isVerified,
+          ipfsHash: candidate.ipfsHash
         });
         if(candidate.isVerified) verifiedCandidatesCount++ ; 
       }
       this.setState({verifiedCandidatesCount : verifiedCandidatesCount})
-      // this.setState({ candidates: this.state.candidates });
 
       // Loading current voter
       const voter = await this.state.ElectionInstance.methods
@@ -114,6 +116,7 @@ export default class Voting extends Component {
           isVerified: voter.isVerified,
           isRegistered: voter.isRegistered,
           otp: voter.otp,
+          ipfsHash:voter.ipfsHash
         },
       });
 
@@ -130,7 +133,7 @@ export default class Voting extends Component {
       console.error(error);
     }
   };
-  checkOTP = async () => {
+  checkOTP = () => {
     if (this.state.currentVoter.otp === this.state.otpEntered) {
       this.setState({ emailVerified: true });
       alert("OTP accepted ! Go ahead and cast your vote");
@@ -168,10 +171,15 @@ export default class Voting extends Component {
             </tr>
           </table>
         </div>
+        
         <div className="vote-btn-container">
+        <img src={candidate.ipfsHash} alt="candidate-img" className="candidate-img"></img>
           <button
-            onClick={() => confirmVote(candidate.id, candidate.header)}
-            className="vote-bth"
+            onClick={() => {
+              confirmVote(candidate.id, candidate.header) ; 
+              console.log(this.state.currentVoter.ipfsHash) ; 
+            }}
+            className="button-9"
             disabled={
               !this.state.currentVoter.isRegistered ||
               this.state.currentVoter.hasVoted ||
@@ -195,123 +203,141 @@ export default class Voting extends Component {
       );
     }
 
+    if (!this.state.isElStarted && !this.state.isElEnded) {
+      return (
+        <>
+          {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
+          <NotInit />
+        </>
+      );
+    }
+
+    if (this.state.isElStarted && this.state.isElEnded) {
+      return (
+        <>
+          {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
+          <div className="container-item attention">
+            <center>
+              <h3>The Election ended.</h3>
+              <br />
+              <Link
+                to="/Results"
+                style={{ color: "black", textDecoration: "underline" }}
+              >
+                See results
+              </Link>
+            </center>
+          </div>
+        </>
+      );
+    }
+
+    if (!this.state.isElStarted && this.state.isElEnded) {
+      return <>
+      {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
+      {this.state.currentVoter.isRegistered ? (
+        // this.state.currentVoter.isVerified ? (
+        this.state.currentVoter.hasVoted ? (
+          <div className="container-item success">
+            <div>
+              <strong>You've casted your vote.</strong>
+              <p />
+              <center>
+                <Link
+                  to="/Results"
+                  style={{
+                    color: "black",
+                    textDecoration: "underline",
+                  }}
+                >
+                  See Results
+                </Link>
+              </center>
+            </div>
+          </div>
+        ) : (
+          <div className="container-item info">
+            <center>Go ahead and cast your vote.</center>
+          </div>
+        )
+      ) : (
+        <>
+          <div className="container-item attention">
+            <center>
+              <p>You're not registered. Please register first.</p>
+              <br />
+              <Link
+                to="/Registration"
+                style={{ color: "black", textDecoration: "underline" }}
+              >
+                Registration Page
+              </Link>
+            </center>
+          </div>
+        </>
+      )}
+      <div className="container-main">
+        {this.state.currentVoter.isRegistered && (
+          <div className="container-main-special">
+            <h2>OTP Verification </h2>
+            <form>
+              <label>Enter the OTP sent over email</label>
+              <input
+                className={"input-r"}
+                type="password"
+                style={{ width: "400px", marginTop: "20px" }}
+                disabled={this.state.currentVoter.hasVoted}
+                onChange={(e) => {
+                  this.setState({ otpEntered: e.target.value });
+                }}
+                required
+              ></input>
+              <button
+                type="submit"
+                style={{
+                  width: "100px",
+                  padding: "10px",
+                  marginTop: "22px",
+                }}
+                disabled={this.state.emailVerified || this.state.currentVoter.hasVoted}
+                onClick={this.checkOTP}
+              >
+                Submit
+              </button>
+            </form>
+          </div>
+        )}
+
+        <h2>Candidates</h2>
+        <small>Total candidates: {this.state.verifiedCandidatesCount}</small>
+        {this.state.candidates.length < 1 ? (
+          <div className="container-item attention">
+            <center>
+              No one to vote for, insufficient number of candidates .
+            </center>
+          </div>
+        ) : (
+          <>
+            {this.state.candidates.map(this.renderCandidates)}
+            <div
+              className="container-item"
+              style={{ border: "1px solid black" }}
+            >
+              <center>That is all.</center>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+    }
     return (
       <>
         {this.state.isAdmin ? <NavbarAdmin /> : <Navbar />}
-        <div>
-          {!this.state.isElStarted && !this.state.isElEnded ? (
-            <NotInit />
-          ) : this.state.isElStarted && !this.state.isElEnded ? (
-            <>
-              {this.state.currentVoter.isRegistered ? (
-                // this.state.currentVoter.isVerified ? (
-                this.state.currentVoter.hasVoted ? (
-                  <div className="container-item success">
-                    <div>
-                      <strong>You've casted your vote.</strong>
-                      <p />
-                      <center>
-                        <Link
-                          to="/Results"
-                          style={{
-                            color: "black",
-                            textDecoration: "underline",
-                          }}
-                        >
-                          See Results
-                        </Link>
-                      </center>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="container-item info">
-                    <center>Go ahead and cast your vote.</center>
-                  </div>
-                )
-              ) : (
-                <>
-                  <div className="container-item attention">
-                    <center>
-                      <p>You're not registered. Please register first.</p>
-                      <br />
-                      <Link
-                        to="/Registration"
-                        style={{ color: "black", textDecoration: "underline" }}
-                      >
-                        Registration Page
-                      </Link>
-                    </center>
-                  </div>
-                </>
-              )}
-              <div className="container-main">
-                {this.state.currentVoter.isRegistered && (
-                  <div className="container-main-special">
-                    <h2>OTP Verification </h2>
-                    <form onSubmit={this.checkOTP}>
-                      <label>Enter the OTP sent over email</label>
-                      <input
-                        className={"input-r"}
-                        type="password"
-                        style={{ width: "400px", marginTop: "20px" }}
-                        disabled={this.state.currentVoter.hasVoted}
-                        onChange={(e) => {
-                          this.setState({ otpEntered: e.target.value });
-                        }}
-                        required
-                      ></input>
-                      <button
-                        type="submit"
-                        style={{
-                          width: "100px",
-                          padding: "10px",
-                          marginTop: "22px",
-                        }}
-                        disabled={this.state.emailVerified}
-                      >
-                        Submit
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                <h2>Candidates</h2>
-                <small>Total candidates: {this.state.verifiedCandidatesCount}</small>
-                {this.state.candidates.length < 1 ? (
-                  <div className="container-item attention">
-                    <center>
-                      No one to vote for, insufficient number of candidates .
-                    </center>
-                  </div>
-                ) : (
-                  <>
-                    {this.state.candidates.map(this.renderCandidates)}
-                    <div
-                      className="container-item"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <center>That is all.</center>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
-          ) : !this.state.isElStarted && this.state.isElEnded ? (
-            <>
-              <div className="container-item attention">
-                <center>
-                  <h3>The Election ended.</h3>
-                  <br />
-                  <Link
-                    to="/Results"
-                    style={{ color: "black", textDecoration: "underline" }}
-                  >
-                    See results
-                  </Link>
-                </center>
-              </div>
-            </>
-          ) : null}
+        <div className="container-item attention">
+          <center>
+            <h3>Voting Phase hasn't started yet </h3>
+            <p>Please wait ...</p>
+          </center>
         </div>
       </>
     );

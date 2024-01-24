@@ -21,18 +21,18 @@ export default function NavbarAdmin() {
           className="navbar-links"
           style={{ transform: open ? "translateX(0px)" : "" }}
         >
-          <li>
+          {/* <li>
             <NavLink to="/AddCandidate" activeClassName="nav-active">
               Candidate Registration
             </NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink to="/Verification" activeClassName="nav-active">
               Candidate Verification
             </NavLink>
           </li>
 
-          <li>
+          {/* <li>
             <NavLink to="/Registration" activeClassName="nav-active">
               Voter Registration
             </NavLink>
@@ -41,7 +41,7 @@ export default function NavbarAdmin() {
             <NavLink to="/Voting" activeClassName="nav-active">
               Voting
             </NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink to="/Results" activeClassName="nav-active">
               Results

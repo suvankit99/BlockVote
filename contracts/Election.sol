@@ -14,7 +14,22 @@ contract Election {
         candidateCount = 0;
         voterCount = 0;
         start = false;
-        end = false;
+        end = false; 
+    }
+    // start candidate registration 
+    function startCandidateRegistration() public onlyAdmin(){
+        start = true ; 
+        end = false ;
+    }
+    // function start voting phase 
+    function startVoting() public onlyAdmin(){
+        start = false ;
+        end = true ; 
+    }
+    // End election
+    function endElection() public onlyAdmin {
+        end = true;
+        start = true;
     }
 
     function getAdmin() public view returns (address) {
@@ -35,11 +50,12 @@ contract Election {
         string slogan;
         uint256 voteCount;
         bool isVerified ;
+        string ipfsHash ; 
     }
     mapping(uint256 => Candidate) public candidateDetails;
 
     // Adding new candidates
-    function addCandidate(string memory _header, string memory _slogan)
+    function addCandidate(string memory _header, string memory _slogan , string memory _ipfsHash)
         public
         // Only admin can add
         // onlyAdmin
@@ -51,7 +67,8 @@ contract Election {
                 header: _header,
                 slogan: _slogan,
                 voteCount: 0,
-                isVerified : false 
+                isVerified : false ,
+                ipfsHash : _ipfsHash 
             });
         candidateDetails[candidateCount] = newCandidate;
         candidateCount += 1;
@@ -94,8 +111,8 @@ contract Election {
             _electionTitle,
             _organizationTitle
         );
-        start = true;
-        end = false;
+        start = true ;
+        end = false ;
     }
 
     // Get Elections details
@@ -136,12 +153,14 @@ contract Election {
         bool hasVoted;
         bool isRegistered;
         string otp ; 
+        string ipfsHash;
     }
+
     address[] public voters; // Array of address to store address of voters
     mapping(address => Voter) public voterDetails; 
 
     // Request to be added as voter
-    function registerAsVoter(string memory _name, string memory _phone , string memory _email , string memory _otp) public {
+    function registerAsVoter(string memory _name, string memory _phone , string memory _email , string memory _otp , string memory _ipfsHash) public {
         Voter memory newVoter =
             Voter({
                 voterAddress: msg.sender,
@@ -151,7 +170,8 @@ contract Election {
                 hasVoted: false,
                 isVerified: false,
                 isRegistered: true,
-                otp: _otp
+                otp: _otp , 
+                ipfsHash:_ipfsHash
             });
         voterDetails[msg.sender] = newVoter;
         voters.push(msg.sender);
@@ -162,17 +182,12 @@ contract Election {
     function vote(uint256 candidateId) public {
         require(voterDetails[msg.sender].hasVoted == false);
         // require(voterDetails[msg.sender].isVerified == true);
-        require(start == true);
-        require(end == false);
+        require(start == false);
+        require(end == true);
         candidateDetails[candidateId].voteCount += 1;
         voterDetails[msg.sender].hasVoted = true;
     }
 
-    // End election
-    function endElection() public onlyAdmin {
-        end = true;
-        start = false;
-    }
 
     // Get election start and end values
     function getStart() public view returns (bool) {
